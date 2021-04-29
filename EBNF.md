@@ -1,3 +1,5 @@
+## Doth Lang EBNF
+
 ```
 CODE = STATEMENT, {STATEMENT};
 STATEMENT = DEF_FUNCTION | COMMAND;
@@ -21,7 +23,7 @@ ELSEIF = "ESHNA", "(", COMPARISSON, ")", BLOCK, ELSEIF |
 
 ELSE = "NAKHAAN", "(", COMPARISSON, ")", BLOCK, "NAKHO";
 
-LOOP : "HAEI", "(", COMPARISSON, ")", BLOCK, "NAKHO";
+LOOP : "ATAKI", "HAEI", "(", COMPARISSON, ")", BLOCK, "NAKHO";
 
 ASSIGNMENT = VTYPE, IDENTIFIER, "=", S_STATEMENT, "NAKHO";
 
@@ -51,21 +53,3 @@ WORD = LETTER, {LETTER};
 
 COMPARATORS = ">" | "<" | ">=" | "<=" | "==" | "!=";
 ```
-
-## Variable Types
-
-- ASE -> String
-- ATO -> Integer
-- SOM -> Void
-- TAWAK -> Boolean
-- NAQIS -> Float
-
-## Lexical Features
-
-- ATAKI -> Start of command
-- NAKHO -> End of statement/line
-- FIN -> If
-- ESHNA -> Else if
-- NAKHAAN -> Else
-- HAEI -> While
-- EZAT -> Return
