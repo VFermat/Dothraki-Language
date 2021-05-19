@@ -49,17 +49,17 @@ class DothParser(Parser):
         return 0
 
     @_(
-        'IF LPAREN comparisson RPAREN block elseif',
-        'IF LPAREN comparisson RPAREN block elses',
-        'IF LPAREN comparisson RPAREN block EOL',
+        'IF LPAREN or_expr RPAREN block elseif',
+        'IF LPAREN or_expr RPAREN block elses',
+        'IF LPAREN or_expr RPAREN block EOL',
     )
     def conditional(self, p):
         return 0
 
     @_(
-        'ELIF LPAREN comparisson RPAREN block elseif',
-        'ELIF LPAREN comparisson RPAREN block elses',
-        'ELIF LPAREN comparisson RPAREN block EOL',
+        'ELIF LPAREN or_expr RPAREN block elseif',
+        'ELIF LPAREN or_expr RPAREN block elses',
+        'ELIF LPAREN or_expr RPAREN block EOL',
     )
     def elseif(self, p):
         return 0
@@ -68,7 +68,7 @@ class DothParser(Parser):
     def elses(self, p):
         return 0
 
-    @_('WHILE LPAREN comparisson RPAREN block EOL')
+    @_('WHILE LPAREN or_expr RPAREN block EOL')
     def loop(self, p):
         return 0
 
@@ -115,19 +115,6 @@ class DothParser(Parser):
 
     @_('BOPEN command { command } BCLOSE')
     def block(self, p):
-        return 0
-
-    @_(
-        'or_expr EQ or_expr',
-        'or_expr LE or_expr',
-        'or_expr LT or_expr',
-        'or_expr GE or_expr',
-        'or_expr GT or_expr',
-        'or_expr NE or_expr',
-        'or_expr AND or_expr',
-        'or_expr OR or_expr',
-    )
-    def comparisson(self, p):
         return 0
 
     @_(
