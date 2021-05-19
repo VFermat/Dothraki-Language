@@ -118,14 +118,14 @@ class DothParser(Parser):
         return 0
 
     @_(
-        'expr EQ expr',
-        'expr LE expr',
-        'expr LT expr',
-        'expr GE expr',
-        'expr GT expr',
-        'expr NE expr',
-        'expr AND expr',
-        'expr OR expr',
+        'or_expr EQ or_expr',
+        'or_expr LE or_expr',
+        'or_expr LT or_expr',
+        'or_expr GE or_expr',
+        'or_expr GT or_expr',
+        'or_expr NE or_expr',
+        'or_expr AND or_expr',
+        'or_expr OR or_expr',
     )
     def comparisson(self, p):
         return 0
