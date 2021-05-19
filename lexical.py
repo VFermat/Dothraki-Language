@@ -5,9 +5,9 @@ class DothLexer(Lexer):
 
     tokens = {PLUS, MINUS, TIMES, DIVIDE, ASSIGN, LPAREN,
               RPAREN, BOPEN, BCLOSE, EOL, EQ, LE, LT, GE,
-              GT, NE, AND, OR, TSTRING, TINT, VOID, BOOL, TFLOAT,
+              GT, NE, AND, OR, TSTRING, TINT, VOID, BOOL, TFLOAT, NOT,
               IF, ELIF, ELSE, WHILE, RETURN, PRINT, NAME, NUMBER, FLOAT, STRING}
-    ignore = ' \t'
+    ignore = ' \t,'
     literals = {'.', '!'}
 
     # Special Symbols
@@ -28,6 +28,7 @@ class DothLexer(Lexer):
     GT = r'>'
     NE = r'!='
     AND = r'&&'
+    NOT = r'!'
     OR = r'\|\|'
 
     # Variable Types
