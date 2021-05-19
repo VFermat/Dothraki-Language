@@ -1,2 +1,6 @@
 /.vscode
 /dothraki
+test*
+parser.out
+
+/__pycache__
