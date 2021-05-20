@@ -6,7 +6,8 @@ class DothLexer(Lexer):
     tokens = {PLUS, MINUS, TIMES, DIVIDE, ASSIGN, LPAREN,
               RPAREN, BOPEN, BCLOSE, EOL, EQ, LE, LT, GE,
               GT, NE, AND, OR, TSTRING, TINT, VOID, BOOL, TFLOAT, NOT,
-              IF, ELIF, ELSE, WHILE, RETURN, PRINT, NAME, NUMBER, FLOAT, STRING}
+              IF, ELIF, ELSE, WHILE, RETURN, PRINT, NAME, NUMBER,
+              FLOAT, STRING, TRUE, FALSE}
     ignore = ' \t,'
     literals = {'.', '!'}
 
@@ -83,6 +84,8 @@ class DothLexer(Lexer):
     NAME['NAQIS'] = TFLOAT
     NAME['NAKHO'] = EOL
     NAME['FREDRIK'] = PRINT
+    NAME['taw'] = TRUE
+    NAME['wat'] = FALSE
 
     # Ignored pattern
     ignore_newline = r'\n+'

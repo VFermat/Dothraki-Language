@@ -171,6 +171,8 @@ class DothParser(Parser):
         'NAME',
         'STRING',
         'FLOAT',
+        'TRUE',
+        'FALSE',
     )
     def factor(self, p):
         return 0
