@@ -1,5 +1,6 @@
 from parser import DothParser
 from lexical import DothLexer
+from symbolTable import SymbolTable
 import sys
 
 if __name__ == '__main__':
@@ -10,9 +11,11 @@ if __name__ == '__main__':
             code = tmp.read()
     lexer = DothLexer()
     parser = DothParser()
+    table = SymbolTable()
     if code:
         tokens = lexer.tokenize(code)
-        parser.parse(tokens)
+        nodes = parser.parse(tokens)
+        nodes.evaluate(table)
     else:
         while True:
             try:
@@ -21,4 +24,5 @@ if __name__ == '__main__':
                 break
             if text:
                 tokens = lexer.tokenize(text)
-                parser.parse(tokens)
+                node = parser.parse(tokens)
+                node.evaluate(table)
