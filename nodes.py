@@ -323,7 +323,9 @@ class FloatVal(Node):
         super().__init__(value)
 
     def evaluate(self, table: SymbolTable):
+        if '.' in self.value.value:
         return ir.Constant(ir.FloatType(), self.value.value)
+        return ir.Constant(ir.IntType(32), self.value.value)
 
 
 class StringVal(Node):
