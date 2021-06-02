@@ -1,7 +1,8 @@
+import sys
+sys.path.append('../')
 from typing import List, NoReturn, Union, Set
 from sly.lex import Token
-from symbolTable import SymbolTable
-from codegen import CodeGen
+from helpers.symbolTable import SymbolTable
 from llvmlite import ir
 import uuid
 from copy import deepcopy

@@ -1,7 +1,7 @@
-from parser import DothParser
-from lexical import DothLexer
-from symbolTable import SymbolTable
-from codegen import CodeGen
+from compiler.parser import DothParser
+from compiler.lexical import DothLexer
+from helpers.symbolTable import SymbolTable
+from llvm.codegen import CodeGen
 import sys
 
 if __name__ == '__main__':
@@ -20,7 +20,7 @@ if __name__ == '__main__':
         nodes = parser.parse(tokens)
         nodes.evaluate(table)
         codegen.createIr()
-        codegen.saveIr('output.ll')
+        codegen.saveIr('./out/output.ll')
     else:
         while True:
             try:

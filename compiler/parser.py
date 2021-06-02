@@ -1,6 +1,8 @@
+import sys
+sys.path.append('../')
 from sly import Parser
-from lexical import DothLexer
-from nodes import Node, Block, DefFuncOp, IfOp, LoopOp, DeclarationOp, AssignmentOp, ReturnOp, CallFunOp, PrintOp, BinOp, UnOp, IntVal, FloatVal, StringVal, BoolVal, IdentifierVal, NoOp
+from compiler.lexical import DothLexer
+from helpers.nodes import Node, Block, DefFuncOp, IfOp, LoopOp, DeclarationOp, AssignmentOp, ReturnOp, CallFunOp, PrintOp, BinOp, UnOp, IntVal, FloatVal, StringVal, BoolVal, IdentifierVal, NoOp
 from llvmlite import ir
 
 
@@ -12,7 +14,7 @@ class DothParser(Parser):
         ('left', TIMES, DIVIDE),
         ('right', UMINUS, UNOT, UPLUS),
     )
-    debugfile = 'parser.out'
+    debugfile = './out/parser.out'
 
     def __init__(self, module, builder, printf, debug=True):
         self.module = module
