@@ -233,7 +233,8 @@ class DothParser(Parser):
 
     @_(
         'rel_expr',
-        'rel_expr EQ eq_expr'
+        'rel_expr EQ eq_expr',
+        'rel_expr NE eq_expr'
     )
     def eq_expr(self, p):
         values = p._slice
@@ -245,7 +246,9 @@ class DothParser(Parser):
     @_(
         'expr',
         'expr GT rel_expr',
-        'expr LT rel_expr'
+        'expr LT rel_expr',
+        'expr GE rel_expr',
+        'expr LE rel_expr'
     )
     def rel_expr(self, p):
         values = p._slice

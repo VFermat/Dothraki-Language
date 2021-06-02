@@ -276,14 +276,20 @@ class BinOp(Node):
             i = self.builder.sdiv(children0, children1)
         elif self.value.type == 'EQ':
             i = self.builder.icmp_signed('==', children0, children1)
+        elif self.value.type == 'NE':
+            i = self.builder.icmp_signed('!=', children0, children1)
         elif self.value.type == 'OR':
             i = self.builder.or_(children0, children1)
         elif self.value.type == 'AND':
             i = self.builder.and_(children0, children1)
         elif self.value.type == 'GT':
             i = self.builder.icmp_signed('>', children0, children1)
+        elif self.value.type == 'GE':
+            i = self.builder.icmp_signed('>=', children0, children1)
         elif self.value.type == 'LT':
             i = self.builder.icmp_signed('<', children0, children1)
+        elif self.value.type == 'LE':
+            i = self.builder.icmp_signed('<=', children0, children1)
         else:
             raise BufferError(f"Invalid operation of type {self.value.type}")
         return i
