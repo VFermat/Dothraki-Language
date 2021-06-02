@@ -47,28 +47,10 @@ class DothLexer(Lexer):
     # RETURN = r'(EZAT)'
     # PRINT = r'(FREDRIK)'
 
-    NUMBER = r'\d+'
-    # @_(r'\d+')
-    # def NUMBER(self, t):
-    #     t.value = int(t.value)
-    #     return t
-
     FLOAT = r'\d*\.?\d+'
-    # @_(r'\d*\.?\d+')
-    # def FLOAT(self, t):
-    #     t.value = float(t.value)
-    #     return t
+    NUMBER = r'\d+'
 
     STRING = r'''("[^"\\]*(\\.[^"\\]*)*"|'[^'\\]*(\\.[^'\\]*)*')'''
-    # @_(r'''("[^"\\]*(\\.[^"\\]*)*"|'[^'\\]*(\\.[^'\\]*)*')''')
-    # def STRING(self, t):
-    #     t.value = self.remove_quotes(t.value)
-    #     return t
-
-    # def remove_quotes(self, text: str):
-    #     if text.startswith('\"') or text.startswith('\''):
-    #         return text[1:-1]
-    #     return text
 
     # Tokens
     NAME = r'[a-zA-Z_][a-zA-Z0-9_]*'

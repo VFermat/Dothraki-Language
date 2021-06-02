@@ -4,3 +4,7 @@ test*
 parser.out
 
 /__pycache__
+
+output*
+*.ll
+*.dt

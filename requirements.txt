@@ -1,0 +1,5 @@
+autopep8==1.5.7
+llvmlite==0.36.0
+pycodestyle==2.7.0
+sly==0.4
+toml==0.10.2
