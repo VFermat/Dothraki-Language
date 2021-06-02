@@ -1,12 +1,23 @@
 from typing import List, NoReturn, Union, Set
 from sly.lex import Token
 from symbolTable import SymbolTable
+from codegen import CodeGen
+from llvmlite import ir
+import uuid
+from copy import deepcopy
 
 
 class Node:
+
+    module = None
+    builder = None
+    printf = None
+    printfFmtArg = None
+
     def __init__(self, value: Token):
         self.value = value
         self.children: List[Node] = []
+        self.id = str(uuid.uuid4())
 
     def evaluate(self, table: SymbolTable) -> int:
         return 0
@@ -27,11 +38,61 @@ class Block(Node):
 
 class DefFuncOp(Node):
 
-    def __init__(self, value: Token):
-        super().__init__(value)
+    type_dict = {
+        'TINT': ir.IntType(32),
+        'TFLOAT': ir.FloatType(),
+        'TSTRING': ir.ArrayType(ir.IntType(8), 64),
+        'BOOL': ir.VoidType(),
+    }
+    var_dict = {
+        'TINT': 'int',
+        'TFLOAT': 'float',
+        'TSTRING': 'string',
+        'BOOL': 'bool',
+    }
 
-    def evaluate(self, table):
-        return 0
+    def __init__(self, value: Token, funcType: Token):
+        super().__init__(value)
+        self.params = []
+        self.block = None
+        self.funcType = self.type_dict[funcType.type]
+
+    def addParam(self, param: List):
+        param = [param[0].type, param[1].value]
+        self.params.append(param)
+
+    def setBlock(self, block: Node):
+        self.block = block
+
+    def evaluate(self, table: SymbolTable):
+        fnty = ir.FunctionType(
+            self.funcType, [self.type_dict[p[0]] for p in self.params])
+        func = ir.Function(self.module, fnty, name=self.value.value)
+
+        funcBlock = func.append_basic_block(f'{self.value.value}_entry')
+        previousBuilder = self.builder
+
+        Node.builder = ir.IRBuilder(funcBlock)
+
+        paramsPtrs = []
+        for i, typ in enumerate([self.type_dict[p[0]] for p in self.params]):
+            ptr = self.builder.alloca(typ)
+            self.builder.store(func.args[i], ptr)
+            paramsPtrs.append(ptr)
+
+        scopeTable = SymbolTable()
+        for i, (typ, name) in enumerate(self.params):
+            scopeTable.declareVariable(
+                name, paramsPtrs[i])
+
+        scopeTable.declareVariable(self.value.value, func)
+        self.block.evaluate(scopeTable)
+        if self.funcType == ir.VoidType():
+            self.builder.ret_void()
+
+        table.declareVariable(self.value.value, func)
+        Node.builder = previousBuilder
+        return table
 
 
 class IfOp(Node):
@@ -55,15 +116,25 @@ class IfOp(Node):
         self.elifClauses.append([clause, command])
 
     def evaluate(self, table: SymbolTable) -> NoReturn:
-        if self.condition.evaluate(table)[0]:
-            self.commandTrue.evaluate(table)
-        else:
-            for clause in self.elifClauses:
-                if clause[0].evaluate(table)[0]:
-                    clause[1].evaluate(table)
-                    return
-            if self.commandElse != None:
-                self.commandElse.evaluate(table)
+        cond = self.condition.evaluate(table)
+        with self.builder.if_else(cond) as (then, otherwise):
+            with then:
+                self.commandTrue.evaluate(table)
+            with otherwise:
+                # for ind, elif_ in enumerate(self.elifClauses):
+                #     elifEntry = self.builder.append_basic_block(
+                #         name=f"elif_{self.id}_{ind}")
+                #     ifOut = self.builder.append_basic_block(
+                #         name=f"elif_out_{self.id}_{ind}")
+                #     typ, value, cond = elif_[0].evaluate(table)
+                #     self.builder.cbranch(cond, elifEntry, ifOut)
+                #     pos = self.builder.position_at_start(elifEntry)
+                #     com = elif_[1].evaluate(table)
+                #     typ, value, cond = self.condition.evaluate(table)
+                #     self.builder.cbranch(cond, elifEntry, ifOut)
+                #     self.builder.position_at_start(ifOut)
+                if self.commandElse:
+                    self.commandElse.evaluate(table)
 
 
 class LoopOp(Node):
@@ -77,8 +148,15 @@ class LoopOp(Node):
         self.command = command
 
     def evaluate(self, table: SymbolTable) -> NoReturn:
-        while self.condition.evaluate(table)[0]:
-            self.command.evaluate(table)
+        loopEntry = self.builder.append_basic_block(name=f"while_{self.id}")
+        loopOut = self.builder.append_basic_block(name=f"while_out_{self.id}")
+        cond = self.condition.evaluate(table)
+        self.builder.cbranch(cond, loopEntry, loopOut)
+        pos = self.builder.position_at_start(loopEntry)
+        com = self.command.evaluate(table)
+        cond = self.condition.evaluate(table)
+        self.builder.cbranch(cond, loopEntry, loopOut)
+        self.builder.position_at_start(loopOut)
 
 
 class DeclarationOp(Node):
@@ -86,10 +164,10 @@ class DeclarationOp(Node):
     var_type: Token
     expr: Node
     var_dict = {
-        'TINT': 'int',
-        'TFLOAT': 'float',
-        'TSTRING': 'string',
-        'BOOL': 'bool',
+        'TINT': ir.IntType(32),
+        'TFLOAT': ir.FloatType(),
+        'TSTRING': ir.ArrayType(ir.IntType(8), 64),
+        'BOOL': ir.VoidType(),
     }
 
     def __init__(self, value: Token, var_type: Token, expr: Node):
@@ -98,8 +176,10 @@ class DeclarationOp(Node):
         self.expr = expr
 
     def evaluate(self, table: SymbolTable):
-        table.declareVariable(
-            self.value.value, self.expr.evaluate(table)[0], self.var_type)
+        expr = self.expr.evaluate(table)
+        irAloc = self.builder.alloca(self.var_type, name=self.value.value)
+        self.builder.store(expr, irAloc)
+        table.declareVariable(self.value.value, irAloc)
         return table
 
 
@@ -112,9 +192,10 @@ class AssignmentOp(Node):
         self.expr = expr
 
     def evaluate(self, table: SymbolTable):
+        pointer = table.getVariable(self.value.value)
         expr = self.expr.evaluate(table)
-        table.setVariable(self.value.value,
-                          expr[0], expr[1])
+        self.builder.store(expr, pointer)
+        table.setVariable(self.value.value, pointer)
         return table
 
 
@@ -127,7 +208,7 @@ class ReturnOp(Node):
         self.expr = expr
 
     def evaluate(self, table):
-        return self.expr.evaluate(table)
+        return self.builder.ret(self.expr.evaluate(table))
 
 
 class CallFunOp(Node):
@@ -140,7 +221,14 @@ class CallFunOp(Node):
         self.params = params
 
     def evaluate(self, table):
-        return super().evaluate(table)
+        args = []
+        for param in self.params:
+            value = param.evaluate(table)
+            args.append(value)
+
+        func = table.getVariable(self.value)
+        ret = self.builder.call(func, args)
+        return ret
 
 
 class PrintOp(Node):
@@ -152,7 +240,10 @@ class PrintOp(Node):
         self.expr = expr
 
     def evaluate(self, table):
-        print(self.expr.evaluate(table)[0])
+        value = self.expr.evaluate(table)
+
+        # Call Print Function
+        self.builder.call(self.printf, [self.printfFmtArg, value])
 
 
 class BinOp(Node):
@@ -164,47 +255,27 @@ class BinOp(Node):
     def evaluate(self, table: SymbolTable):
         children0 = self.children[0].evaluate(table)
         children1 = self.children[1].evaluate(table)
-        operation_result = None
-        var_type = None
         if self.value.type == 'PLUS':
-            operation_result = children0[0] + children1[0]
-            if children0[1] == 'int' and children1[1] == 'int':
-                var_type = 'int'
-            elif 'float' in [children0[1], children1[1]]:
-                var_type = 'float'
+            i = self.builder.add(children0, children1)
         elif self.value.type == 'MINUS':
-            operation_result = children0[0] - children1[0]
-            if children0[1] == 'int' and children1[1] == 'int':
-                var_type = 'int'
-            elif 'float' in [children0[1], children1[1]]:
-                var_type = 'float'
+            i = self.builder.sub(children0, children1)
         elif self.value.type == 'TIMES':
-            operation_result = children0[0] * children1[0]
-            if children0[1] == 'int' and children1[1] == 'int':
-                var_type = 'int'
-            elif 'float' in [children0[1], children1[1]]:
-                var_type = 'float'
+            i = self.builder.mul(children0, children1)
         elif self.value.type == 'DIVIDE':
-            operation_result = children0[0] / children1[0]
-            var_type = "float"
+            i = self.builder.sdiv(children0, children1)
         elif self.value.type == 'EQ':
-            operation_result = children0[0] == children1[0]
-            var_type = "bool"
+            i = self.builder.icmp_signed('==', children0, children1)
         elif self.value.type == 'OR':
-            operation_result = children0[0] or children1[0]
-            var_type = "bool"
+            i = self.builder.or_(children0, children1)
         elif self.value.type == 'AND':
-            operation_result = children0[0] and children1[0]
-            var_type = "bool"
+            i = self.builder.and_(children0, children1)
         elif self.value.type == 'GT':
-            operation_result = children0[0] > children1[0]
-            var_type = "bool"
+            i = self.builder.icmp_signed('>', children0, children1)
         elif self.value.type == 'LT':
-            operation_result = children0[0] < children1[0]
-            var_type = "bool"
+            i = self.builder.icmp_signed('<', children0, children1)
         else:
             raise BufferError(f"Invalid operation of type {self.value.type}")
-        return operation_result, var_type
+        return i
 
 
 class UnOp(Node):
@@ -216,12 +287,13 @@ class UnOp(Node):
         self.expr = expr
 
     def evaluate(self, table):
+        ret = self.expr.evaluate(table)
         if self.value.type == 'UPLUS' or self.value.type == 'PLUS':
-            return self.expr.evaluate(table)
+            return ret
         elif self.value.type == 'UMINUS' or self.value.type == 'MINUS':
-            return -self.expr.evaluate(table)
+            return self.builder.neg(ret)
         elif self.value.type == 'UNOT' or self.value.type == 'NOT':
-            return not self.expr.evaluate(table)
+            return self.builder.not_(ret)
         else:
             raise BufferError(f"Invalid operation of type {self.value.type}")
 
@@ -232,7 +304,7 @@ class IntVal(Node):
         super().__init__(value)
 
     def evaluate(self, table: SymbolTable):
-        return int(self.value.value), "int"
+        return ir.Constant(ir.IntType(32), self.value.value)
 
 
 class FloatVal(Node):
@@ -241,7 +313,7 @@ class FloatVal(Node):
         super().__init__(value)
 
     def evaluate(self, table: SymbolTable):
-        return float(self.value.value), "float"
+        return ir.Constant(ir.FloatType(), self.value.value)
 
 
 class StringVal(Node):
@@ -250,7 +322,9 @@ class StringVal(Node):
         super().__init__(value)
 
     def evaluate(self, table: SymbolTable):
-        return self.value.value, "string"
+        i = ir.Constant(ir.ArrayType(ir.IntType(8), len(self.value.value)),
+                        bytearray(self.value.value.encode("utf8")))
+        return i
 
 
 class BoolVal(Node):
@@ -259,7 +333,7 @@ class BoolVal(Node):
         super().__init__(value)
 
     def evaluate(self, table: SymbolTable):
-        return bool(self.value.value), "bool"
+        return ir.Constant(ir.IntType(1), self.value.value)
 
 
 class IdentifierVal(Node):
@@ -268,7 +342,9 @@ class IdentifierVal(Node):
         super().__init__(value)
 
     def evaluate(self, table: SymbolTable):
-        return table.getVariable(self.value.value)
+        variable = table.getVariable(self.value.value)
+        i = self.builder.load(variable, name=self.value.value)
+        return i
 
 
 class NoOp(Node):
@@ -277,4 +353,4 @@ class NoOp(Node):
         super().__init__(value)
 
     def evaluate(self, table: SymbolTable):
-        return 0, "void"
+        return ir.Constant(ir.IntType(32), 0)

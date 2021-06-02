@@ -1,6 +1,7 @@
 from sly import Parser
 from lexical import DothLexer
-from nodes import Block, DefFuncOp, IfOp, LoopOp, DeclarationOp, AssignmentOp, ReturnOp, CallFunOp, PrintOp, BinOp, UnOp, IntVal, FloatVal, StringVal, BoolVal, IdentifierVal, NoOp
+from nodes import Node, Block, DefFuncOp, IfOp, LoopOp, DeclarationOp, AssignmentOp, ReturnOp, CallFunOp, PrintOp, BinOp, UnOp, IntVal, FloatVal, StringVal, BoolVal, IdentifierVal, NoOp
+from llvmlite import ir
 
 
 class DothParser(Parser):
@@ -13,8 +14,27 @@ class DothParser(Parser):
     )
     debugfile = 'parser.out'
 
-    def __init__(self, debug=True):
+    def __init__(self, module, builder, printf, debug=True):
+        self.module = module
+        self.builder = builder
+        self.printf = printf
         self.variables = {}
+        Node.module = self.module
+        Node.builder = self.builder
+        Node.printf = self.printf
+        Node.printfFmtArg = self._configurePrintf()
+
+    def _configurePrintf(self):
+        # Declare argument list
+        voidptrY = ir.IntType(8).as_pointer()
+        fmt = "%i \n\0"
+        cFmt = ir.Constant(ir.ArrayType(ir.IntType(8), len(fmt)),
+                           bytearray(fmt.encode("utf8")))
+        globalFmt = ir.GlobalVariable(self.module, cFmt.type, name="fstr")
+        globalFmt.linkage = 'internal'
+        globalFmt.global_constant = True
+        globalFmt.initializer = cFmt
+        return self.builder.bitcast(globalFmt, voidptrY)
 
     @_('{ statement }')
     def code(self, p):
@@ -62,14 +82,19 @@ class DothParser(Parser):
         return values[0]
 
     @_(
-        'TSTRING NAME LPAREN param { param } RPAREN block EOL',
-        'TINT NAME LPAREN param { param } RPAREN block EOL',
-        'TFLOAT NAME LPAREN param { param } RPAREN block EOL',
-        'BOOL NAME LPAREN param { param } RPAREN block EOL',
+        'TSTRING NAME LPAREN { param } RPAREN block EOL',
+        'TINT NAME LPAREN { param } RPAREN block EOL',
+        'TFLOAT NAME LPAREN { param } RPAREN block EOL',
+        'BOOL NAME LPAREN { param } RPAREN block EOL',
+        'VOID NAME LPAREN { param } RPAREN block EOL',
     )
     def def_function(self, p):
         values = p._slice
-        return DefFuncOp(values[1])
+        func = DefFuncOp(values[1], values[0])
+        for prm in p.param:
+            func.addParam(prm)
+        func.setBlock(p.block)
+        return func
 
     @_(
         'IF LPAREN or_expr RPAREN block elseif',
@@ -83,7 +108,7 @@ class DothParser(Parser):
         elif values[-1].type == 'elses':
             root = IfOp(values[0], p.or_expr, p.block)
             elses = p.elses
-            root.setElse(elses[3])
+            root.setElse(elses[2])
             return root
         elif values[-1].type == 'elseif':
             root = IfOp(values[0], p.or_expr, p.block)
@@ -150,15 +175,15 @@ class DothParser(Parser):
         values = p._slice
         return AssignmentOp(values[0], p.or_expr)
 
-    @_('RETURN or_expr')
+    @_('RETURN or_expr EOL')
     def returns(self, p):
         return ReturnOp(p.RETURN, p.or_expr)
 
     @_(
-        'NAME LPAREN { param } RPAREN',
+        'NAME LPAREN { factor } RPAREN',
     )
     def call_function(self, p):
-        return CallFunOp(p.NAME)
+        return CallFunOp(p.NAME, p.factor)
 
     @_('PRINT LPAREN or_expr RPAREN EOL')
     def println(self, p):
@@ -172,7 +197,7 @@ class DothParser(Parser):
     )
     def param(self, p):
         values = p._slice
-        return (values[0], values[1])
+        return values[0], values[1]
 
     @_('BOPEN { command } BCLOSE')
     def block(self, p):
@@ -269,7 +294,7 @@ class DothParser(Parser):
         if values[0].type == 'NUMBER':
             return IntVal(values[0])
         elif values[0].type in ['PLUS', 'MINUS', 'NOT']:
-            return UnOp(values[0], values[1])
+            return UnOp(values[0], values.factor)
         elif values[0].type == 'NAME':
             return IdentifierVal(values[0])
         elif values[0].type == 'STRING':
