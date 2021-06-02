@@ -42,13 +42,15 @@ class DefFuncOp(Node):
         'TINT': ir.IntType(32),
         'TFLOAT': ir.FloatType(),
         'TSTRING': ir.ArrayType(ir.IntType(8), 64),
-        'BOOL': ir.VoidType(),
+        'BOOL': ir.IntType(1),
+        'VOID': ir.VoidType(),
     }
     var_dict = {
         'TINT': 'int',
         'TFLOAT': 'float',
         'TSTRING': 'string',
         'BOOL': 'bool',
+        'VOID': 'void',
     }
 
     def __init__(self, value: Token, funcType: Token):
@@ -85,12 +87,16 @@ class DefFuncOp(Node):
             scopeTable.declareVariable(
                 name, paramsPtrs[i])
 
+        for var, val in table.table.items():
+            if val['type'] == 'function':
+                scopeTable.declareVariable(var, val['pointer'], val['type'])
+
         scopeTable.declareVariable(self.value.value, func)
         self.block.evaluate(scopeTable)
         if self.funcType == ir.VoidType():
             self.builder.ret_void()
 
-        table.declareVariable(self.value.value, func)
+        table.declareVariable(self.value.value, func, "function")
         Node.builder = previousBuilder
         return table
 
@@ -167,7 +173,8 @@ class DeclarationOp(Node):
         'TINT': ir.IntType(32),
         'TFLOAT': ir.FloatType(),
         'TSTRING': ir.ArrayType(ir.IntType(8), 64),
-        'BOOL': ir.VoidType(),
+        'BOOL': ir.IntType(1),
+        'VOID': ir.VoidType(),
     }
 
     def __init__(self, value: Token, var_type: Token, expr: Node):
@@ -192,7 +199,7 @@ class AssignmentOp(Node):
         self.expr = expr
 
     def evaluate(self, table: SymbolTable):
-        pointer = table.getVariable(self.value.value)
+        pointer, tmp = table.getVariable(self.value.value)
         expr = self.expr.evaluate(table)
         self.builder.store(expr, pointer)
         table.setVariable(self.value.value, pointer)
@@ -226,7 +233,7 @@ class CallFunOp(Node):
             value = param.evaluate(table)
             args.append(value)
 
-        func = table.getVariable(self.value)
+        func, tmp = table.getVariable(self.value)
         ret = self.builder.call(func, args)
         return ret
 
@@ -241,9 +248,12 @@ class PrintOp(Node):
 
     def evaluate(self, table):
         value = self.expr.evaluate(table)
+        # value = self.builder.trunc(value, ir.IntType(8))
+        globalFmt, voidptrY = self.printfFmtArg
 
+        strFmt = self.builder.bitcast(globalFmt, voidptrY)
         # Call Print Function
-        self.builder.call(self.printf, [self.printfFmtArg, value])
+        self.builder.call(self.printf, [strFmt, value])
 
 
 class BinOp(Node):
@@ -342,7 +352,7 @@ class IdentifierVal(Node):
         super().__init__(value)
 
     def evaluate(self, table: SymbolTable):
-        variable = table.getVariable(self.value.value)
+        variable, tmp = table.getVariable(self.value.value)
         i = self.builder.load(variable, name=self.value.value)
         return i
 

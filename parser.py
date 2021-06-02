@@ -34,7 +34,7 @@ class DothParser(Parser):
         globalFmt.linkage = 'internal'
         globalFmt.global_constant = True
         globalFmt.initializer = cFmt
-        return self.builder.bitcast(globalFmt, voidptrY)
+        return globalFmt, voidptrY
 
     @_('{ statement }')
     def code(self, p):

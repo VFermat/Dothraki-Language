@@ -11,15 +11,15 @@ class SymbolTable:
 
     def getVariable(self, variable: str) -> Token:
         if variable in self.table:
-            return self.table[variable]["pointer"]
+            return self.table[variable]["pointer"], self.table[variable]["type"]
         raise KeyError(f"No variable named {variable}")
 
     def declareVariable(
-        self, variable: str, ptr
+        self, variable: str, ptr, var_type: str = "null"
     ) -> NoReturn:
         if variable in self.table:
             raise NameError(f"Variable {variable} already declared")
-        self.table[variable] = {"pointer": ptr}
+        self.table[variable] = {"pointer": ptr, "type": var_type}
 
     def setVariable(
         self, variable: str, ptr
