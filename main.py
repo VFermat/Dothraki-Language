@@ -8,6 +8,9 @@ if __name__ == '__main__':
     code = None
     if len(sys.argv) > 1:
         f = sys.argv[1]
+        extension = f.split('.')[-1]
+        if extension != 'dt':
+            raise TypeError("Invalid file type for compiler.")
         with open(f, "r") as tmp:
             code = tmp.read()
 
@@ -15,19 +18,8 @@ if __name__ == '__main__':
     lexer = DothLexer()
     parser = DothParser(codegen.module, codegen.builder, codegen.printf)
     table = SymbolTable()
-    if code:
-        tokens = lexer.tokenize(code)
-        nodes = parser.parse(tokens)
-        nodes.evaluate(table)
-        codegen.createIr()
-        codegen.saveIr('./out/output.ll')
-    else:
-        while True:
-            try:
-                text = input('>>> ')
-            except EOFError:
-                break
-            if text:
-                tokens = lexer.tokenize(text)
-                node = parser.parse(tokens)
-                node.evaluate(table)
+    tokens = lexer.tokenize(code)
+    nodes = parser.parse(tokens)
+    nodes.evaluate(table)
+    codegen.createIr()
+    codegen.saveIr('./out/output.ll')

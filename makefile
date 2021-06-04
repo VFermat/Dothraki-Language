@@ -2,7 +2,7 @@ all: generate_llvm parse_llvm compile_gcc run
 
 generate_llvm:
 	@echo "\nAnalysing program"
-	python3 main.py ./examples/test.dt
+	python3 main.py ${file}
 
 parse_llvm:
 	@echo "\nCompiling program"

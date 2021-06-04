@@ -1,0 +1,8 @@
+ATO sum(ATO one, ATO two) {
+    ATO result = one + two NAKHO
+    EZAT result NAKHO
+} NAKHO
+
+ATO one = 1 NAKHO
+ATO two = 2 NAKHO
+FREDRIK(sum(one, two)) NAKHO

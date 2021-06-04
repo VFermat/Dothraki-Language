@@ -1,23 +1,9 @@
-# Dothraki Language
+# Doth Lang Compiler
 
-A computer language based on Dothraki Idiom, from the TV Show and Book Series Game of Thrones
+## English Documentation
 
-**EBNF**: [Link](EBNF.md)
+[Click Here](README-en.md)
 
-## Variable Types
+## Documentação em Português
 
-- ASE -> String
-- ATO -> Integer
-- SOM -> Void
-- TAWAK -> Boolean
-- NAQIS -> Float
-
-## Lexical Features
-
-- ATAKI -> Start of command
-- NAKHO -> End of statement/line
-- FIN -> If
-- ESHNA -> Else if
-- NAKHAAN -> Else
-- HAEI -> While
-- EZAT -> Return
+[Clique aqui](README-pt.md)

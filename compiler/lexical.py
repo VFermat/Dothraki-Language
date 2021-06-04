@@ -21,7 +21,6 @@ class DothLexer(Lexer):
     RPAREN = r'\)'
     BOPEN = r'\{'
     BCLOSE = r'\}'
-    # EOL = r'(NAKHO)'
     EQ = r'=='
     LE = r'<='
     LT = r'<'
@@ -31,21 +30,6 @@ class DothLexer(Lexer):
     AND = r'&&'
     NOT = r'!'
     OR = r'\|\|'
-
-    # Variable Types
-    # TSTRING = r'(ASE)'
-    # TINT = r'(ATO)'
-    # VOID = r'(SOM)'
-    # BOOL = r'(TAWAK)'
-    # TFLOAT = r'(NAQIS)'
-
-    # Lexical Features
-    # IF = r'(FIN)'
-    # ELIF = r'(ESHNA)'
-    # ELSE = r'(NAKHAAN)'
-    # WHILE = r'(HAEI)'
-    # RETURN = r'(EZAT)'
-    # PRINT = r'(FREDRIK)'
 
     FLOAT = r'\d*\.?\d+'
     NUMBER = r'\d+'
