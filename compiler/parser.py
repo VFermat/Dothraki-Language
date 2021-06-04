@@ -110,27 +110,12 @@ class DothParser(Parser):
         elif values[-1].type == 'elses':
             root = IfOp(values[0], p.or_expr, p.block)
             elses = p.elses
-            root.setElse(elses[2])
+            root.setElse(elses)
             return root
         elif values[-1].type == 'elseif':
             root = IfOp(values[0], p.or_expr, p.block)
             elifs = p.elseif
-            if elifs[0] == 'else':
-                root.setElse(elifs[2])
-                return root
-            else:
-                root.addElif(elifs[1], elifs[2])
-            if len(elifs[3]) > 0:
-                while True:
-                    if elifs[0] == 'else':
-                        root.setElse(elifs[2])
-                        return root
-                    else:
-                        root.addElif(elifs[1], elifs[2])
-                    if len(elifs) > 3:
-                        elifs = elifs[3]
-                    else:
-                        break
+            root.setElse(elifs)
             return root
 
     @_(
@@ -140,16 +125,21 @@ class DothParser(Parser):
     )
     def elseif(self, p):
         values = p._slice
+        root = IfOp(values[0], p.or_expr, p.block)
         if values[-1].type == 'EOL':
-            return ['elif', p.or_expr, p.block, []]
+            return root
         elif values[-1].type == 'elseif':
-            return ['elif', p.or_expr, p.block, p.elifs]
+            elif_ = p.elifs
+            root.setElse(elif_)
+            return root
         elif values[-1].type == 'elses':
-            return ['elif', p.or_expr, p.block, p.elses]
+            else_ = p.elses
+            root.setElse(else_)
+            return root
 
     @_('ELSE block EOL')
     def elses(self, p):
-        return ['else', p.block, p.block, []]
+        return p.block
 
     @_('WHILE LPAREN or_expr RPAREN block EOL')
     def loop(self, p):

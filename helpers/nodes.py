@@ -128,18 +128,6 @@ class IfOp(Node):
             with then:
                 self.commandTrue.evaluate(table)
             with otherwise:
-                # for ind, elif_ in enumerate(self.elifClauses):
-                #     elifEntry = self.builder.append_basic_block(
-                #         name=f"elif_{self.id}_{ind}")
-                #     ifOut = self.builder.append_basic_block(
-                #         name=f"elif_out_{self.id}_{ind}")
-                #     typ, value, cond = elif_[0].evaluate(table)
-                #     self.builder.cbranch(cond, elifEntry, ifOut)
-                #     pos = self.builder.position_at_start(elifEntry)
-                #     com = elif_[1].evaluate(table)
-                #     typ, value, cond = self.condition.evaluate(table)
-                #     self.builder.cbranch(cond, elifEntry, ifOut)
-                #     self.builder.position_at_start(ifOut)
                 if self.commandElse:
                     self.commandElse.evaluate(table)
 
