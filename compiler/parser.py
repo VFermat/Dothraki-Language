@@ -289,7 +289,7 @@ class DothParser(Parser):
         if values[0].type == 'NUMBER':
             return IntVal(values[0])
         elif values[0].type in ['PLUS', 'MINUS', 'NOT']:
-            return UnOp(values[0], values.factor)
+            return UnOp(values[0], p.factor)
         elif values[0].type == 'NAME':
             return IdentifierVal(values[0])
         elif values[0].type == 'STRING':
