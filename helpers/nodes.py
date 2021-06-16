@@ -329,8 +329,8 @@ class StringVal(Node):
         super().__init__(value)
 
     def evaluate(self, table: SymbolTable):
-        i = ir.Constant(ir.ArrayType(ir.IntType(8), len(self.value.value)),
-                        bytearray(self.value.value.encode("utf8")))
+        i = ir.Constant(ir.ArrayType(ir.IntType(8), 64),
+                        bytearray(self.value.value.encode("utf8") + (" "*(64 - len(self.value.value))).encode("utf8")))
         return i
 
 

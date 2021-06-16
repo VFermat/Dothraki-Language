@@ -7,8 +7,8 @@ class DothLexer(Lexer):
               RPAREN, BOPEN, BCLOSE, EOL, EQ, LE, LT, GE,
               GT, NE, AND, OR, TSTRING, TINT, VOID, BOOL, TFLOAT, NOT,
               IF, ELIF, ELSE, WHILE, RETURN, PRINT, NAME, NUMBER,
-              FLOAT, STRING, TRUE, FALSE}
-    ignore = ' \t,'
+              FLOAT, STRING, TRUE, FALSE, COMMA}
+    ignore = ' \t'
     literals = {'.', '!'}
 
     # Special Symbols
@@ -35,6 +35,8 @@ class DothLexer(Lexer):
     NUMBER = r'\d+'
 
     STRING = r'''("[^"\\]*(\\.[^"\\]*)*"|'[^'\\]*(\\.[^'\\]*)*')'''
+
+    COMMA = r','
 
     # Tokens
     NAME = r'[a-zA-Z_][a-zA-Z0-9_]*'

@@ -84,16 +84,25 @@ class DothParser(Parser):
         return values[0]
 
     @_(
-        'TSTRING NAME LPAREN { param } RPAREN block EOL',
-        'TINT NAME LPAREN { param } RPAREN block EOL',
-        'TFLOAT NAME LPAREN { param } RPAREN block EOL',
-        'BOOL NAME LPAREN { param } RPAREN block EOL',
-        'VOID NAME LPAREN { param } RPAREN block EOL',
+        'TSTRING NAME LPAREN RPAREN block EOL',
+        'TSTRING NAME LPAREN param { COMMA param } RPAREN block EOL',
+        'TINT NAME LPAREN RPAREN block EOL',
+        'TINT NAME LPAREN param { COMMA param } RPAREN block EOL',
+        'TFLOAT NAME LPAREN RPAREN block EOL',
+        'TFLOAT NAME LPAREN param { COMMA param } RPAREN block EOL',
+        'BOOL NAME LPAREN RPAREN block EOL',
+        'BOOL NAME LPAREN param { COMMA param } RPAREN block EOL',
+        'VOID NAME LPAREN RPAREN block EOL',
+        'VOID NAME LPAREN param { COMMA param } RPAREN block EOL',
     )
     def def_function(self, p):
         values = p._slice
+        if len(values) > 6:
+            params = [p.param0] + p.param1
+        else:
+            params = []
         func = DefFuncOp(values[1], values[0])
-        for prm in p.param:
+        for prm in params:
             func.addParam(prm)
         func.setBlock(p.block)
         return func
@@ -172,10 +181,16 @@ class DothParser(Parser):
         return ReturnOp(p.RETURN, p.or_expr)
 
     @_(
-        'NAME LPAREN { factor } RPAREN',
+        'NAME LPAREN RPAREN',
+        'NAME LPAREN or_expr { COMMA or_expr } RPAREN',
     )
     def call_function(self, p):
-        return CallFunOp(p.NAME, p.factor)
+        values = p._slice
+        if len(values) > 3:
+            or_exprs = [p.or_expr0] + p.or_expr1
+            return CallFunOp(p.NAME, or_exprs)
+        return CallFunOp(p.NAME, [])
+
 
     @_('PRINT LPAREN or_expr RPAREN EOL')
     def println(self, p):
